@@ -28,9 +28,12 @@ class DrugSearchParams {
 
 final drugSearchParamsProvider = StateProvider<DrugSearchParams>((ref) => const DrugSearchParams());
 
+final resultsLimitProvider = StateProvider<int>((ref) => 50);
+
 final filteredDrugsProvider = Provider<List<Drug>>((ref) {
   final data = ref.watch(allDrugsProvider).maybeWhen(data: (v) => v, orElse: () => const <Drug>[]);
   final params = ref.watch(drugSearchParamsProvider);
+  final limit = ref.watch(resultsLimitProvider);
   final q = params.query.trim().toLowerCase();
 
   bool matches(Drug d) {
@@ -42,5 +45,11 @@ final filteredDrugsProvider = Provider<List<Drug>>((ref) {
     return okQuery && okCategory && okTier && okStatus;
   }
 
-  return data.where(matches).toList(growable=false);
+  final iter = data.where(matches);
+  final out = <Drug>[];
+  for (final d in iter) {
+    out.add(d);
+    if (out.length >= limit) break;
+  }
+  return out;
 });
